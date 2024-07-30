@@ -1,0 +1,199 @@
+                                -----* VARCH *-----
+
+\*\*About :
+
+The project named " VARCH your words,your world !" is a creative room for the developers.
+-> The main objective of this project is that VARCH should be an explorer and also home for all the developers.
+-> This creative room has the ability of writing the posts about your developer journey what have you learnt how you have evolved everything.
+
+                               ---* Create Client *---
+
+\*\* npm create-react-app client
+
+- Complete the basic setup of app.jsx and index.jsx
+- Inside the index.jsx => <App /> is wrapped inside the <BrowserRouter> (BrowserRouter allowing to navigate between different components or pages without reloading the entire page)
+- Also setup the vite server for faster reloading of the server.
+- Use tailwind css framework for this project.
+
+\*\*components
+
+--> step 1:
+
+// Navbar setup
+
+- Create NavbarComponent.jsx
+- Usig <nav> create the nav bar includes logo ,search, write, sigin and signup </nav>
+- Direct the Logo, write, sigin and signup using <Link to=" specify the route here based on the directing page"></Link> tags.
+- Search bar inside the bar should be inside the <input /> tag.
+- once the complete navbar is completed (for user not logged in) : ✅ ---> App.jsx
+
+--> step 12 :
+
+// create notification and profile of user with image
+
+- using useContext() and get the access_token and profile_img from the data stored in session 
+- if acces_token is present then in the navbar component using conditional loop we create the notification link and profile button when that button is clicked we render the profile dropdown.
+- else the sigin and signup links are shown. 
+- if this is done ✅ for dropdown ---> userNavigation.jsx
+
+--> step 13 :
+
+// seting up userNav for user when clicked on profile button
+
+- create userNavigation.jsx component
+- the basix code for the profile,settings,dashboard etc.. are done
+- when user onClick() on signOut button the removeSession() function is called and clear up the session data of user and access_token is no longer exist then --> comes to again home page "/".
+
+
+
+// InputBox SetUp
+
+--> step 4 :
+
+- create InputBox.jsx Component.
+- create <input /> tag which changes according to props.
+- Based on the Props passed inside the UserAuthFrom page the Input is going to be rendered.
+- once the complete setup of Navbar with signin and signup page is done : ✅ ---> server.js
+
+\*\* pages
+
+--> step 3 :
+
+// UserAuthForm page setup
+
+- create UserAuthForm.jsx
+- creating same authform page for for both signin and signup based on the "type" that is passed inside the <UserAuth type="/signin" or type="/signup" /> which is mentioned in the routes inside the App.jsx file,the userauthform page going to be changed as we pass props property inside the UserAuth({type}) function.
+- create a tag called <form> where there are <InputBox /> component is rendering inside based on the {type} prop the <InputBox /> component is going to be changed </form>
+- create <InputBox /> for Fullname (Signup) , Email , Password.
+- pass the props inside the <InputBox name, type, id, value, placeholder, icon, onChange />
+- set up the InputBox.jsx component to handle the input ✅ ----> InputBox.jsx
+
+--> step 7 ;
+
+//handling submit form
+
+- create onClick Submit function for signin and signup button.
+- create the " useRef() " hook outside the return statement with current value undefines
+- Inside the onClick = {handleSubmit} function => use the useRef() hook to access the FormData from current value of useRef() hook.
+- formdata stores the key and values of the input tags of <form>.
+- destructure the formdata into the names of the inputs and based on the input names send the response as error on the UI using <Toaster />(Don't forget to mention the <Toaster /> after the <section> tag) use toast.error for sending the error message on teh UI of the user.
+- once the all data passed on the form by the user is success with out any error message then it calls the function called userAuthFormServer() which is called for the posting the formdata to the server using axios.
+- inside the handleSubmit() function itself declare the const "serverroute" which is going to direct the url based on the {type} prop of the userAuthform.
+- Pass the parameters formdata and serverroute inside the function userAuthFormServer().
+- declare the fucntion outside this handle submit, inside the function using axios.post send the formdata to the server and retrive the data that is being rendered from the server to the client using .then destructure the {data} that invludes ==> (access_token, profile_img, username, fullname) that is being sent as a response from server (provides by the axios) and .catch method to get the errors that is respondes based on the conditions on the backend and toast the errors in the UI using <Toaster />.
+- After step 7 : Data from client ---> to server and DataBase ✅
+- direct to ----> session.jsx
+
+--> step 9 :
+
+// store the {data} into sessions
+
+- using storeInsession function from session.jsx store the {data} -> (stringify to json) as value and key = "user"
+- once the {data} is stored in session ✅ ----> App.jsx
+
+
+--> step 11 :
+
+// redirecting to "/" after access_token creation not showing the signin and signup form
+
+- import useContext() and use to get the userauth,setUserAuth which were set as values in <UserContext.Provider >
+- use setUserAuth() function inside the .then in axios and pass the {data} as parameter which updates when ever {new data} is rendered from server 
+- use access_token as conditional and if exist render the "/" home page to user 
+- after done ✅ ---->  NavbarComponent.jsx
+
+
+
+\*\* common
+
+--> step 8 :
+
+//Create sessions of the userdata => {data}
+
+- create session.jsx
+- create the functions naming "storeInSession,lookInSession,removeFromSession,logOutUser"
+- use sessionStorage.setItem , .getItem, .removeItem, .clear respectively for the functions
+- these sessionStorage is a built-in feature of the web browser as part of the Web Storage API
+- have .setItem(key,value) to pass the user data with specific key,
+- .getItem(key) get that item specific to key,
+- .removeItem(key) removes that particular value respective to that key,
+- .clear() will clear the complete session storage.
+- export the functions to use them in other components.
+- session storage is ready - ✅ ----> userAuthForm.jsx
+
+\*\* App.jsx
+
+--> step 2:
+
+//setting up Routes
+
+- create the routes for the /signin and /signup.
+- create the nested routes "/signin" and "/signup" inside the builtin route "/" (which is NavbarComponent).
+- to create nested route use <Outlet /> tag inside the component where u nested the route.
+- routesetup ✅ ----> userAuthForm.jsx
+
+--> step 10:
+
+//create the createContext()
+
+- assign the createContext() to a const
+- wrap around the Routes and use the <UserContext.Provider pass the value = {}>
+- create a useState({}) with userAuth and setUserAuth => pass them to the <UserContext.Provider value{userauth,setUserAuth}> which allows to acces these userauth and setUserAuth in all the components.
+- the created useState variable have the user {data} which is stored in the session.
+- using useEffcet() hook get the userInSession from lookInSession("user(which is a key)") function (.getItem())
+- in userInSession variable we have the Session data which is being sent using .setItem.
+- make a conditional statement that if the userInSession exist set the userInSession as JSON.parse(userInSession) into the setUserAuth() else setUserAuth access_token as -> null 
+- once the contextCreation is done start using the useContext()
+- once done ✅ ----> userAuthForm.jsx
+
+                            ----* Create Server *----
+
+\*\* npm init -y
+
+--> step 5 :
+
+// Data Base setup schemas
+
+--> step 6 :
+
+//server setup
+
+- import express
+- import mongoose
+- import dotenv
+- import jwt from "jsonwebtoken";
+
+- generate the DB LOCATION in the MongoDB/atlas
+- connect the mongoose with the generated -> DB LOCATION
+
+- create a HTTP post request from the backend for the "/signup",
+- from req.body (client) access the fullname,email,password
+- based on the specifiactions of fullname, email and password send the response to the user in json format (" res.status(403).json("specifiaction based response)"),
+- hash the password from user using bcrypt package,
+- and push the data fullname,email,password and username generated into the new User,
+- once the new user is created the data is is sent as an response in a formated way using formatdata() function,
+- declare the formatdata() function inside this generate an accesstoken using jwt which is unique for every user with respective ti user_id.
+
+- create a HTTP post request from the backend for the "/signin",
+- from req.body (client) get the email and password,
+- check the email and password match and send the response to the client using (" res.status(403).json("specifiaction based response) "),
+- compare the password entered by user with backend data using bcrypt.compare
+
+- once the server setup for handling "/signin" and "/signup" is done : ✅ --> UserAuthForm.jsx
+
+
+
+Modern Blog Editor using Editor JS.
+Google Authentication for Users
+Dynamic Blog Pages on dynamic urls.
+Search Page for Searching Blogs & users.
+Dedicated Users Profile with thier social links and written blogs.
+Dedicated dashboard to manage blogs either published or draft.
+Blog Post Analytics, editable and deletable.
+Like interaction on Blogs with feature to comment on the blog.
+Reply to comments. ( A nested Comment System )
+Every interaction on site stores as a notification for their respective users.
+Recent notification highlight separating them from old notifications.
+Edit profile option to update social links, bio and username
+Also user can change login password from settings.
+Its mobile responsive with modern design + fade in animation on pages. And much more.
+
