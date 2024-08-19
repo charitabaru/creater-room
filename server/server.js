@@ -2,7 +2,6 @@ import express from "express";
 import mongoose from "mongoose";
 import "dotenv/config";
 import bcrypt from "bcrypt";
-import User from "./schemas/User.js";
 import { nanoid } from "nanoid";
 import jwt from "jsonwebtoken";
 import cors from "cors";
@@ -11,6 +10,12 @@ import { getAuth } from "firebase-admin/auth";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+
+//import schemas
+import User from "./models/User.js";
+import Blog from "./models/Blog.js";
+import { count } from "console";
+import { title } from "process";
 
 const app = express();
 
@@ -23,10 +28,11 @@ app.use(
 const port = process.env.PORT;
 const SALT_ROUNDS = 10;
 
+//Google sign-up initialization
 admin.initializeApp({
   credential: admin.credential.cert({
     projectId: process.env.FIREBASE_PROJECT_ID,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
   }),
 });
@@ -36,24 +42,28 @@ let passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/;
 
 app.use(express.json());
 
-mongoose.connect(process.env.DB_LOCATION, {
-  autoIndex: true,
-}).then(async () => {
-  console.log("Connected to database");
-  try {
-    const result = await User.updateMany({}, { $set: { blog_Banner: {} } });
-    console.log(`Updated ${result.modifiedCount} documents`);
-  } catch (error) {
-    console.error("Error updating schema:", error);
-  }
-}).catch((err) => {
-  console.error("Database connection error:", err);
-});
+//DataBase connection
+mongoose
+  .connect(process.env.DB_LOCATION, {
+    autoIndex: true,
+  })
+  .then(async () => {
+    console.log("Connected to database");
+    try {
+      const result = await User.updateMany({}, { $set: { blog_Banner: {} } });
+      console.log(`Updated ${result.modifiedCount} documents`);
+    } catch (error) {
+      console.error("Error updating schema:", error);
+    }
+  })
+  .catch((err) => {
+    console.error("Database connection error:", err);
+  });
 
 // Create uploads directory if it doesn't exist
-const uploadsDir = path.join(process.cwd(), 'uploads');
-if (!fs.existsSync(uploadsDir)){
-    fs.mkdirSync(uploadsDir);
+const uploadsDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
 }
 
 // Set up multer for file uploads
@@ -63,11 +73,10 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname));
-  }
+  },
 });
 
 const upload = multer({ storage: storage });
-
 
 async function generateUsername(email) {
   let username = email.split("@")[0];
@@ -110,6 +119,7 @@ const verifyToken = (req, res, next) => {
   });
 };
 
+//sign-up route
 app.post("/signup", async (req, res) => {
   let { fullname, email, password } = req.body;
 
@@ -161,6 +171,7 @@ app.post("/signup", async (req, res) => {
   }
 });
 
+//sign-in route
 app.post("/signin", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -183,12 +194,10 @@ app.post("/signin", async (req, res) => {
         return res.status(200).json(formataSendData(user));
       }
     } else {
-      return res
-        .status(403)
-        .json({
-          error:
-            "Account was already created using google. Try logging in with google",
-        });
+      return res.status(403).json({
+        error:
+          "Account was already created using google. Try logging in with google",
+      });
     }
   } catch (error) {
     console.error(error);
@@ -196,14 +205,13 @@ app.post("/signin", async (req, res) => {
   }
 });
 
+//google-auth route
 app.post("/google-auth", async (req, res) => {
   let { access_token } = req.body;
 
   if (!access_token) {
     return res.status(400).json({ error: "Access token is required" });
   }
-
-  console.log("Received access token:", access_token);
 
   getAuth()
     .verifyIdToken(access_token)
@@ -260,27 +268,240 @@ app.post("/google-auth", async (req, res) => {
     });
 });
 
-app.post("/upload-banner", verifyToken, upload.single("banner"), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "No file uploaded" });
+//uploading image banner in editor page
+app.post(
+  "/upload-banner",
+  verifyToken,
+  upload.single("banner"),
+  async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const banner_url = `http://localhost:3005/uploads/${req.file.filename}`;
+
+    try {
+      await User.findByIdAndUpdate(req.userId, {
+        "blog_Banner.banner_image": banner_url,
+      });
+
+      res.json({ banner_url });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Error saving banner" });
+    }
   }
-
-  const banner_url = `http://localhost:3005/uploads/${req.file.filename}`;
-
-  try {
-    await User.findByIdAndUpdate(req.userId, {
-      'blog_Banner.banner_image': banner_url
-    });
-
-    res.json({ banner_url });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Error saving banner" });
-  }
-});
+);
 
 // Serve uploaded files
 app.use("/uploads", express.static("uploads"));
+
+//finding latest-blogs
+app.post("/latest-blogs", (req, res) => {
+  let { page } = req.body;
+  let maxLimit = 5;
+  Blog.find({ draft: false })
+    .populate(
+      "author",
+      "personal_info.profile_img personal_info.username personal_info.fullname -_id"
+    )
+    .sort({ publishedAt: -1 })
+    .select("blog_id title des banner activity tags publishedAt -_id")
+    .skip((page - 1) * maxLimit)
+    .limit(maxLimit)
+    .then((blogs) => {
+      return res.status(200).json({ blogs });
+    })
+    .catch((err) => {
+      return res.status(500).json({ error: err.message });
+    });
+});
+
+//latest-blogs-countRoute
+app.post("/all-latest-blogs-count", (req, res) => {
+  Blog.countDocuments({ draft: false })
+    .then((count) => {
+      return res.status(200).json({ totalDocs: count });
+    })
+    .catch((err) => {
+      return res.status(500).json({ error: err.message });
+    });
+});
+
+//search-blogs-countRoute
+app.post("/search-blogs-count", (req, res) => {
+  let { query, tag } = req.body;
+  let findQuery;
+
+  if (tag) {
+    findQuery = { tags: tag, draft: false };
+  } else if (query) {
+    findQuery = { draft: false, title: new RegExp(query, "i") };
+  }
+  Blog.countDocuments(findQuery)
+    .then((count) => {
+      return res.status(200).json({ totalDocs: count });
+    })
+    .catch((err) => {
+      return res.status(500).json({ error: err.message });
+    });
+});
+
+//setting up trending-blogs
+app.get("/trending-blogs", (req, res) => {
+  Blog.find({ draft: false })
+    .populate(
+      "author",
+      "personal_info.profile_img personal_info.username personal_info.fullname -_id"
+    )
+    .sort({
+      "activity.total_reads": -1,
+      "activity.total_likes": -1,
+      publishedAt: -1,
+    })
+    .select("blog_id title publishedAt -_id")
+    .limit(5)
+    .then((blogs) => {
+      return res.status(200).json({ blogs });
+    })
+    .catch((err) => {
+      return res.status(500).json({ error: err.message });
+    });
+});
+
+//Filtreing
+app.post("/search-blogs", (req, res) => {
+  let { query, tag, page } = req.body;
+  let findQuery;
+
+  if (tag) {
+    findQuery = { tags: tag, draft: false };
+  } else if (query) {
+    findQuery = { draft: false, title: new RegExp(query, "i") };
+  }
+
+  let maxLimit = 2;
+  Blog.find(findQuery)
+    .populate(
+      "author",
+      "personal_info.profile_img personal_info.username personal_info.fullname -_id"
+    )
+    .sort({ publishedAt: -1 })
+    .select("blog_id title des banner activity tags publishedAt -_id")
+    .skip((page - 1) * maxLimit)
+    .limit(maxLimit)
+    .then((blogs) => {
+      return res.status(200).json({ blogs });
+    })
+    .catch((err) => {
+      return res.status(500).json({ error: err.message });
+    });
+});
+
+app.post("/search-users", (req, res) => {
+  let { query } = req.body;
+
+  User.find({ "personal_info.username": new RegExp(query, "i") })
+    .limit(50)
+    .select(
+      "personal_info.profile_img personal_info.username personal_info.fullname -_id"
+    )
+    .then((users) => {
+      return res.status(200).json({ users });
+    })
+    .catch((err) => {
+      return res.status(500).json({ error: err.message });
+    });
+});
+
+//to get User profile
+app.post("/get-profile", (req, res) => {
+  let {username} = req.body;
+  User.findOne({ "personal_info.username": username })
+    .select("-personal_info.password -google_auth -updatedAt -blogs")
+    .then((user) => {
+      return res.status(200).json(user);
+    })
+    .catch((err) => {
+      return res.status(500).json({ error: err.message });
+    });
+});
+
+//Publish to create a blog
+app.post("/create-blog", verifyToken, (req, res) => {
+  let authorId = req.userId;
+  let { title, des, banner, content, tags, draft } = req.body;
+
+  if (!title) {
+    return res.status(403).json({ error: "You must provide a title." });
+  }
+
+  if (!draft) {
+    if (!des.length || des.length > 200) {
+      return res.status(403).json({
+        error: "You must provide the description with in 200 characters.",
+      });
+    }
+    if (!banner.length) {
+      return res.status(403).json({
+        error: "You must upload the banner image to publish the blog.",
+      });
+    }
+    if (!content.blocks.length) {
+      return res
+        .status(403)
+        .json({ error: "There must be some blog content to publish it." });
+    }
+    if (!tags.length || tags.length > 10) {
+      return res.status(403).json({
+        error:
+          "Provide the tags in order to publish the blog, maximum limit 10.",
+      });
+    }
+  }
+
+  tags = tags.map((tag) => tag.toLowerCase());
+  let blog_id =
+    title
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .replace(/\s+/g, "-")
+      .trim() + nanoid();
+
+  let blog = new Blog({
+    title,
+    banner,
+    des,
+    content,
+    tags,
+    author: authorId,
+    blog_id,
+    draft: Boolean(draft),
+  });
+
+  blog
+    .save()
+    .then((blog) => {
+      let incrementvalue = draft ? 0 : 1;
+      User.findOneAndUpdate(
+        { _id: authorId },
+        {
+          $inc: { "account_info.total_posts": incrementvalue },
+          $push: { blogs: blog._id },
+        }
+      )
+        .then((user) => {
+          return res.status(200).json({ id: blog_id });
+        })
+        .catch((err) => {
+          return res
+            .status(500)
+            .json({ error: "Failed to update total posts number" });
+        });
+    })
+    .catch((error) => {
+      return res.status(500).json({ error: error.message });
+    });
+});
 
 app.listen(port, () => {
   console.log(`server is listening on port ${port} `);

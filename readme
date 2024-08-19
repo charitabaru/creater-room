@@ -31,9 +31,9 @@ The project named " VARCH your words,your world !" is a creative room for the de
 
 // create notification and profile of user with image
 
-- using useContext() and get the access_token and profile_img from the data stored in session 
+- using useContext() and get the access_token and profile_img from the data stored in session
 - if acces_token is present then in the navbar component using conditional loop we create the notification link and profile button when that button is clicked we render the profile dropdown.
-- else the sigin and signup links are shown. 
+- else the sigin and signup links are shown.
 - if this is done ✅ for dropdown ---> userNavigation.jsx
 
 --> step 13 :
@@ -43,8 +43,6 @@ The project named " VARCH your words,your world !" is a creative room for the de
 - create userNavigation.jsx component
 - the basix code for the profile,settings,dashboard etc.. are done
 - when user onClick() on signOut button the removeSession() function is called and clear up the session data of user and access_token is no longer exist then --> comes to again home page "/".
-
-
 
 // InputBox SetUp
 
@@ -91,17 +89,14 @@ The project named " VARCH your words,your world !" is a creative room for the de
 - using storeInsession function from session.jsx store the {data} -> (stringify to json) as value and key = "user"
 - once the {data} is stored in session ✅ ----> App.jsx
 
-
 --> step 11 :
 
 // redirecting to "/" after access_token creation not showing the signin and signup form
 
 - import useContext() and use to get the userauth,setUserAuth which were set as values in <UserContext.Provider >
-- use setUserAuth() function inside the .then in axios and pass the {data} as parameter which updates when ever {new data} is rendered from server 
-- use access_token as conditional and if exist render the "/" home page to user 
-- after done ✅ ---->  NavbarComponent.jsx
-
-
+- use setUserAuth() function inside the .then in axios and pass the {data} as parameter which updates when ever {new data} is rendered from server
+- use access_token as conditional and if exist render the "/" home page to user
+- after done ✅ ----> NavbarComponent.jsx
 
 \*\* common
 
@@ -141,7 +136,7 @@ The project named " VARCH your words,your world !" is a creative room for the de
 - the created useState variable have the user {data} which is stored in the session.
 - using useEffcet() hook get the userInSession from lookInSession("user(which is a key)") function (.getItem())
 - in userInSession variable we have the Session data which is being sent using .setItem.
-- make a conditional statement that if the userInSession exist set the userInSession as JSON.parse(userInSession) into the setUserAuth() else setUserAuth access_token as -> null 
+- make a conditional statement that if the userInSession exist set the userInSession as JSON.parse(userInSession) into the setUserAuth() else setUserAuth access_token as -> null
 - once the contextCreation is done start using the useContext()
 - once done ✅ ----> userAuthForm.jsx
 
@@ -180,8 +175,6 @@ The project named " VARCH your words,your world !" is a creative room for the de
 
 - once the server setup for handling "/signin" and "/signup" is done : ✅ --> UserAuthForm.jsx
 
-
-
 Modern Blog Editor using Editor JS.
 Google Authentication for Users
 Dynamic Blog Pages on dynamic urls.
@@ -197,3 +190,31 @@ Edit profile option to update social links, bio and username
 Also user can change login password from settings.
 Its mobile responsive with modern design + fade in animation on pages. And much more.
 
+
+
+                      ---* New Things Learning *---
+
+--> In ("/latest-blogs") => {
+
+- server get request
+
+* Used (.populate ) which The populate method is used to replace specified paths in the document with document(s) from other collection(s) => where .populate(
+  "author",
+  "personal_info.profile_img personal_info.username personal_info.fullname -\_id"
+  )
+  Here, it's populating the author field.
+  The second argument specifies which fields to include from the author document: profile image, username, and fullname.
+  The -\_id at the end excludes the author's ID from the result.
+
+* Used (.limit) where this The limit() method in this query is used to restrict the number of documents returned by the database.
+
+- advantages:
+  -> By limiting the number of documents, you reduce the amount of data transferred from the database to the server, which can improve response times.
+  -> Pagination: It's often used as part of a pagination strategy, where you fetch a small subset of results at a time.
+
+}
+
+----> toLocalString() this fun is in built which converts the numbers 10500 => 10,500.
+----> &nbsp;&nbsp; we can use this to add space between the two elements in the <p></p> tag.
+
+why taking page:1 as like this in function call and page=1 in argument ?? fetch later
