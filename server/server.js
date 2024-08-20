@@ -330,14 +330,17 @@ app.post("/all-latest-blogs-count", (req, res) => {
 
 //search-blogs-countRoute
 app.post("/search-blogs-count", (req, res) => {
-  let { query, tag } = req.body;
+  let { author,query, tag } = req.body;
   let findQuery;
 
   if (tag) {
     findQuery = { tags: tag, draft: false };
   } else if (query) {
     findQuery = { draft: false, title: new RegExp(query, "i") };
+  }else if(author){
+    findQuery = { author, draft: false };
   }
+
   Blog.countDocuments(findQuery)
     .then((count) => {
       return res.status(200).json({ totalDocs: count });
@@ -371,13 +374,15 @@ app.get("/trending-blogs", (req, res) => {
 
 //Filtreing
 app.post("/search-blogs", (req, res) => {
-  let { query, tag, page } = req.body;
+  let {author, query, tag, page } = req.body;
   let findQuery;
 
   if (tag) {
     findQuery = { tags: tag, draft: false };
   } else if (query) {
     findQuery = { draft: false, title: new RegExp(query, "i") };
+  }else if(author){
+    findQuery = { author, draft: false };
   }
 
   let maxLimit = 2;
@@ -398,6 +403,8 @@ app.post("/search-blogs", (req, res) => {
     });
 });
 
+
+//searching users in url
 app.post("/search-users", (req, res) => {
   let { query } = req.body;
 

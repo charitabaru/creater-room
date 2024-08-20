@@ -216,5 +216,7 @@ Its mobile responsive with modern design + fade in animation on pages. And much 
 
 ----> toLocalString() this fun is in built which converts the numbers 10500 => 10,500.
 ----> &nbsp;&nbsp; we can use this to add space between the two elements in the <p></p> tag.
+----> Object.keys(social_links) => This will create an arrray of the keys belong to social_links like  
+      ["youtube","Fcaebook",...] those are the keys.
 
 why taking page:1 as like this in function call and page=1 in argument ?? fetch later
